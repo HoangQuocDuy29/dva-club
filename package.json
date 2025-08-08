@@ -1,0 +1,12 @@
+{
+  "name": "volleyball-club-management",
+  "version": "1.0.0", 
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run start:dev",
+    "install:all": "cd client && npm install && cd ../server && npm install && cd ../shared && npm install && cd ..",
+    "clean": "rimraf node_modules client/node_modules server/node_modules shared/node_modules"
+  }
+}
