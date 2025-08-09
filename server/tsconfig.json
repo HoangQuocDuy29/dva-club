@@ -1,34 +1,28 @@
 {
   "compilerOptions": {
-    /*  Môi trường biên dịch  */
     "module": "commonjs",
-    "target": "ES2021",
-
-    /*  Đường dẫn  */
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "baseUrl": "./",
-
-    /*  Tính năng TypeScript  */
-    "strict": true,                       /* Bật toàn bộ strict-mode */
-    "skipLibCheck": true,                 /* Không check *.d.ts để build nhanh hơn */
-    "forceConsistentCasingInFileNames": true,
-    "incremental": true,                  /* Tăng tốc build sau mỗi lần sửa */
-
-    /*  Hỗ trợ NestJS decorators  */
+    "declaration": true,
+    "strict": true,
+    "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-
-    /*  Tiện ích  */
-    "declaration": true,                  /* Sinh *.d.ts nếu cần publish lib */
-    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2020",
     "sourceMap": true,
-    "allowSyntheticDefaultImports": true
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@volleyball-club/shared": ["../shared/src/index.ts"],
+      "@volleyball-club/shared/*": ["../shared/src/*"]
+    }
   },
-
-  /*  Chỉ biên dịch file TypeScript trong src/  */
-  "include": ["src/**/*.ts"],
-
-  /*  Bỏ qua test, dist và node_modules  */
-  "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

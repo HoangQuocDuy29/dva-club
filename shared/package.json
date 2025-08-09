@@ -1,7 +1,6 @@
 {
   "name": "@volleyball-club/shared",
   "version": "1.0.0",
-  "description": "Shared types, schemas and utilities for Volleyball Club Management",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -10,14 +9,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "dayjs": "^1.11.10",
-    "zod": "^3.25.76"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.19.9",
-    "typescript": "^5.9.2"
-  },
-  "peerDependencies": {
-    "typescript": ">=5.0.0"
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
   }
 }

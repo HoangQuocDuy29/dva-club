@@ -1,12 +1,17 @@
 {
   "name": "volleyball-club-management",
-  "version": "1.0.0", 
+  "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "shared",
+    "server"
+  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:client": "cd client && npm run dev",
-    "dev:server": "cd server && npm run start:dev",
-    "install:all": "cd client && npm install && cd ../server && npm install && cd ../shared && npm install && cd ..",
-    "clean": "rimraf node_modules client/node_modules server/node_modules shared/node_modules"
+    "build:shared": "npm run build --workspace=shared",
+    "start:server": "npm run start:dev --workspace=server",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.3"
   }
 }
