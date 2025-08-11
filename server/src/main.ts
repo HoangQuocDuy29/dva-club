@@ -1,54 +1,58 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { initializeDatabase } from './database/data-source';
 
 async function bootstrap() {
   try {
-    // Initialize database connection first
-    console.log('🔄 Initializing database connection...');
+    // Initialize database
+    console.log('🔄 Initializing database...');
     await initializeDatabase();
-    console.log('✅ Database connection initialized successfully');
+    console.log('✅ Database connected');
     
-    // Create NestJS application
-    console.log('🔄 Starting NestJS application...');
+    // Create app
     const app = await NestFactory.create(AppModule);
-    
-    // Get config service
     const configService = app.get(ConfigService);
     
-    // Global validation pipe
+    // Validation
     app.useGlobalPipes(new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      disableErrorMessages: false, // ✅ THÊM: Show validation errors
     }));
     
-    // CORS configuration
-    const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+    // CORS
     app.enableCors({
-      origin: corsOrigin.split(','), // ✅ SỬA: Support multiple origins
+      origin: ['http://localhost:3000', 'http://localhost:3001'],
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // ✅ THÊM: Explicit methods
-      allowedHeaders: ['Content-Type', 'Authorization'], // ✅ THÊM: Headers
     });
     
-    // Global prefix for API routes
-    app.setGlobalPrefix('api/v1'); // ✅ SỬA: Thêm version
+    // API prefix
+    app.setGlobalPrefix('api/v1');
+    
+    // Swagger
+    const config = new DocumentBuilder()
+      .setTitle('Volleyball Club API')
+      .setDescription('Volleyball Club Management System API')
+      .setVersion('1.0.0')
+      .addTag('Authentication', 'Auth endpoints')
+      .addBearerAuth()
+      .build();
+    
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
     
     // Start server
     const port = configService.get<number>('SERVER_PORT', 3001);
     await app.listen(port);
     
-    console.log(`🚀 Volleyball Club Management System started successfully!`);
-    console.log(`✅ Server running on http://localhost:${port}`);
-    console.log(`✅ API available at http://localhost:${port}/api/v1`);
-    console.log(`🏐 Environment: ${configService.get<string>('NODE_ENV', 'development')}`);
+    console.log(`🚀 Server running: http://localhost:${port}`);
+    console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
     
   } catch (error) {
-    console.error('❌ Error starting application:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   }
 }
