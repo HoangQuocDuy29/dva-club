@@ -15,7 +15,7 @@ import * as entities from '../entities';
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', '123456'), // ✅ Updated password
+        password: configService.get<string>('DB_PASSWORD', '123456'),
         database: configService.get<string>('DB_NAME', 'dvaclub'),
         
         // Entity configuration
@@ -23,16 +23,24 @@ import * as entities from '../entities';
         
         // Development settings
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        
+        // ✅ DETAILED LOGGING FOR DEBUG
         logging: configService.get<string>('NODE_ENV') === 'development' 
-          ? ['query', 'error', 'warn'] 
+          ? "all"  // Enable ALL queries including soft delete operations
           : ['error'],
+        
+        // ✅ ADVANCED CONSOLE LOGGER WITH DETAILS
+        logger: "advanced-console",
+        
+        // ✅ LOG SLOW QUERIES FOR DEBUGGING
+        maxQueryExecutionTime: 100,  // Log queries taking > 100ms
         
         // Connection pool settings with timezone
         extra: {
           connectionLimit: 10,
           acquireTimeout: 60000,
           timeout: 60000,
-          timezone: 'Asia/Ho_Chi_Minh', // ✅ Vietnam timezone
+          timezone: 'Asia/Ho_Chi_Minh',
         },
         
         // Migration settings
@@ -73,13 +81,25 @@ export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
       console.log('🔄 Initializing database connection...');
       await initializeDatabase();
       
-      // ✅ Set timezone explicitly after connection
+      // Set timezone explicitly after connection
       const dataSource = AppDataSource;
       if (dataSource.isInitialized) {
         await dataSource.query("SET timezone = 'Asia/Ho_Chi_Minh'");
       }
       
       console.log('✅ Database module initialized successfully');
+      
+      // ✅ FIX: Use this.configService instead of configService
+      if (this.configService.get<string>('NODE_ENV') === 'development') {
+        console.log('🔍 Database configuration:', {
+          host: this.configService.get<string>('DB_HOST', 'localhost'),
+          port: this.configService.get<number>('DB_PORT', 5432),
+          database: this.configService.get<string>('DB_NAME', 'dvaclub'),
+          logging: "all",
+          entities: Object.keys(entities).length,
+        });
+      }
+      
     } catch (error) {
       console.error('❌ Failed to initialize database module:', error);
       throw error;

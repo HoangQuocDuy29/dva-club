@@ -35,6 +35,7 @@ export class AuthService {
    * Validate user credentials for local authentication
    */
   async validateUser(email: string, password: string): Promise<UserContext | null> {
+    console.log('Validating user:', email);
     try {
       const user = await this.userRepository.findOne({
         where: { email, isActive: true },
@@ -251,7 +252,7 @@ async register(registerDto: RegisterDto): Promise<LoginResponse> {
       };
 
       const accessToken = await this.jwtService.signAsync(newPayload);
-      const expiresIn = 3600; // 1 hour
+      const expiresIn = 10800; // 3 hour
       const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
       return {

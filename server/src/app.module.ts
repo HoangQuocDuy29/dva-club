@@ -1,5 +1,8 @@
+//E:\2_NodeJs\DVA_Club\volleyball-club-management\server\src\app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';  // ✅ THÊM IMPORT NÀY
+import { join } from 'path';  // ✅ THÊM IMPORT NÀY
 import { DatabaseModule } from './database/database.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -7,8 +10,24 @@ import { AppService } from './app.service';
 // ✅ Import Auth Module
 import { AuthModule } from './modules/auth/auth.module';
 
+// ✅ Import Users Module
+import { UsersModule } from './modules/users/users.module';
+
 @Module({
   imports: [
+    // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'storage'),
+      serveRoot: '/storage',
+      exclude: ['/api*'],  // Exclude API routes
+      serveStaticOptions: {
+        index: false,
+        dotfiles: 'deny',
+        redirect: false,
+      },
+    }),
+    
+
     // Environment configuration
     ConfigModule.forRoot({
       isGlobal: true,
@@ -22,11 +41,8 @@ import { AuthModule } from './modules/auth/auth.module';
     // ✅ Authentication module
     AuthModule,
     
-    // Add your other feature modules here later
-    // UserModule,
-    // TeamModule,
-    // TournamentModule,
-    // etc.
+    // ✅ Users management module
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

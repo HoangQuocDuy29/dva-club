@@ -2,6 +2,7 @@ import {
   Entity, 
   PrimaryGeneratedColumn, 
   Column, 
+  DeleteDateColumn,
   CreateDateColumn, 
   UpdateDateColumn,
   OneToOne,
@@ -46,6 +47,9 @@ export class User {
 
   @Column({ name: 'last_login', type: 'timestamp', nullable: true })
   lastLogin?: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt?: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

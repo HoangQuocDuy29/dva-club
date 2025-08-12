@@ -2,6 +2,7 @@ import {
   Entity, 
   PrimaryGeneratedColumn, 
   Column, 
+  DeleteDateColumn,
   CreateDateColumn, 
   UpdateDateColumn,
   OneToOne,
@@ -34,6 +35,9 @@ export class UserProfile {
 
   @Column({ name: 'social_links', type: 'jsonb', nullable: true })
   socialLinks?: Record<string, any>;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt?: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
