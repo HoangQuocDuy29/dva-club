@@ -27,16 +27,22 @@ export class CreateDivisionDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ enum: ["amateur", "semi_professional", "professional"] })
+  @ApiProperty({
+    example: "professional",
+    enum: ["amateur", "semi_professional", "professional"],
+  })
   @IsEnum(["amateur", "semi_professional", "professional"])
   level: string;
 
-  @ApiPropertyOptional({ enum: ["youth", "junior", "senior", "veteran"] })
+  @ApiPropertyOptional({
+    example: "senior",
+    enum: ["youth", "junior", "senior", "veteran"],
+  })
   @IsOptional()
   @IsEnum(["youth", "junior", "senior", "veteran"])
   ageGroup?: string;
 
-  @ApiPropertyOptional({ enum: ["male", "female", "mixed"] })
+  @ApiPropertyOptional({ example: "male", enum: ["male", "female", "mixed"] })
   @IsOptional()
   @IsEnum(["male", "female", "mixed"])
   genderCategory?: string;
@@ -57,7 +63,7 @@ export class CreateDivisionDto {
   @IsDateString()
   seasonEnd?: string;
 
-  @ApiPropertyOptional({ example: 150.0 })
+  @ApiPropertyOptional({ example: 150.5 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

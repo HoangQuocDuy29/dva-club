@@ -16,6 +16,7 @@ import { UsersModule } from "./modules/users/users.module";
 // ✅ ADD: Import DivisionsModule
 
 import { DivisionsModule } from "./modules/divisions/divisions.module";
+//import { DivisionsModule } from './divisions/divisions.module';
 @Module({
   imports: [
     // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
