@@ -18,6 +18,9 @@ import { UsersModule } from "./modules/users/users.module";
 import { DivisionsModule } from "./modules/divisions/divisions.module";
 //import { DivisionsModule } from './divisions/divisions.module';
 import { PlayersModule } from "../src/modules/players/players.module";
+import { TournamentSquadsModule } from "./modules/tournament-squads/tournament-squads.module";
+import { TournamentsModule } from "./modules/tournaments/tournaments.module";
+import { TeamsModule } from "./modules/teams/teams.module";
 @Module({
   imports: [
     // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
@@ -53,6 +56,12 @@ import { PlayersModule } from "../src/modules/players/players.module";
 
     // ✅ Players module
     PlayersModule,
+
+    TournamentSquadsModule,
+
+    TournamentsModule,
+
+    TeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
