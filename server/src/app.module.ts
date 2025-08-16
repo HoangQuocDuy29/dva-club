@@ -17,6 +17,7 @@ import { UsersModule } from "./modules/users/users.module";
 
 import { DivisionsModule } from "./modules/divisions/divisions.module";
 //import { DivisionsModule } from './divisions/divisions.module';
+import { PlayersModule } from "../src/modules/players/players.module";
 @Module({
   imports: [
     // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
@@ -49,6 +50,9 @@ import { DivisionsModule } from "./modules/divisions/divisions.module";
 
     // ✅ ADD: Divisions module
     DivisionsModule,
+
+    // ✅ Players module
+    PlayersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
