@@ -22,6 +22,7 @@ import { TournamentSquadsModule } from "./modules/tournament-squads/tournament-s
 import { TournamentsModule } from "./modules/tournaments/tournaments.module";
 import { TeamsModule } from "./modules/teams/teams.module";
 import { PlayerStatisticsModule } from "./modules/player-statistics/player-statistics.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
 @Module({
   imports: [
     // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
@@ -65,6 +66,8 @@ import { PlayerStatisticsModule } from "./modules/player-statistics/player-stati
     TeamsModule,
 
     PlayerStatisticsModule,
+
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
