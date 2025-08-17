@@ -23,6 +23,7 @@ import { TournamentsModule } from "./modules/tournaments/tournaments.module";
 import { TeamsModule } from "./modules/teams/teams.module";
 import { PlayerStatisticsModule } from "./modules/player-statistics/player-statistics.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { MediaModule } from "./modules/media/media.module";
 @Module({
   imports: [
     // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
@@ -68,6 +69,8 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
     PlayerStatisticsModule,
 
     NotificationsModule,
+
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
