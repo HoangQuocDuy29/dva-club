@@ -6,36 +6,43 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { queryClient } from './services/api/client'
 import { AppRouter } from './router/AppRouter'
+import '@fontsource/montserrat/300.css';
+import '@fontsource/montserrat/400.css';
+import '@fontsource/montserrat/500.css';
+import '@fontsource/montserrat/600.css';
+import '@fontsource/montserrat/700.css';
+import '@fontsource/montserrat/800.css';
 
-// ✅ Tạo theme MUI tạm thời (có thể tách ra file riêng sau)
+// ✅ Theme MUI đơn giản
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2', // Volleyball blue
+      main: '#1976d2',
     },
     secondary: {
-      main: '#dc004e', // Volleyball red
+      main: '#dc004e',
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Montserrat", "Roboto", "Helvetica", "Arial", sans-serif',
   },
 })
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <BrowserRouter>
-          {/* ✅ Bỏ div tạm thời, thay bằng AppRouter */}
-          <AppRouter />
-        </BrowserRouter>
-        {process.env.NODE_ENV === 'development' && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
-      </ThemeProvider>
-    </QueryClientProvider>
+    <div style={{ fontFamily: 'Montserrat, sans-serif' }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <BrowserRouter>
+            <AppRouter />
+          </BrowserRouter>
+          {process.env.NODE_ENV === 'development' && (
+            <ReactQueryDevtools initialIsOpen={false} />
+          )}
+        </ThemeProvider>
+      </QueryClientProvider>
+    </div>
   )
 }
 
