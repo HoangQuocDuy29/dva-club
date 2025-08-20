@@ -27,11 +27,12 @@ import {
   Logout,
   MoreVert
 } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // ✅ Add useNavigate
 import { useAuthStore } from '../../auth/store/authStore';
 import { useAuth } from '../../auth/hooks/useAuth';
 import type { DashboardModule } from '../types/dashboard.types';
 import DVALogo from '../../../assets/images/logos/dva.png';
+
 const SIDEBAR_WIDTH = 280;
 
 const menuItems = [
@@ -56,6 +57,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => {
   const { user } = useAuthStore();
   const { logout } = useAuth();
+  const navigate = useNavigate(); // ✅ Add useNavigate hook
   const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
 
@@ -64,8 +66,60 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => 
     setProfileAnchor(null);
   };
 
-  // ✅ FIX: Complete optional chaining
-  const userInitial = (user?.firstName?.[0] || user?.email?.[0] || 'U').toUpperCase();
+  // ✅ Enhanced logout handler with redirect
+  const handleLogout = async () => {
+    try {
+      // ✅ Optional: Show confirmation dialog
+      const confirmLogout = window.confirm('Are you sure you want to logout?');
+      if (!confirmLogout) {
+        handleClose();
+        return;
+      }
+
+      console.log('🚪 Starting logout process...');
+
+      // ✅ Call logout from auth hook (clears auth state)
+      await logout();
+
+      // ✅ Additional cleanup - clear any remaining localStorage
+      localStorage.removeItem('auth-token');
+      localStorage.removeItem('refresh-token');
+      localStorage.removeItem('auth-storage');
+      localStorage.removeItem('user-data');
+
+      console.log('✅ Logout successful - redirecting to homepage');
+
+      // ✅ Close any open menus
+      handleClose();
+
+      // ✅ Redirect to homepage
+      navigate('/', { replace: true });
+
+      // ✅ Optional: Show success message
+      setTimeout(() => {
+        console.log('🏠 Redirected to homepage');
+      }, 100);
+
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      
+      // ✅ Force logout even if auth hook fails
+      localStorage.clear();
+      handleClose();
+      navigate('/', { replace: true });
+      
+      alert('Logout completed. You have been redirected to the homepage.');
+    }
+  };
+
+  // ✅ Complete optional chaining
+  const userInitial = (
+  (user?.firstName?.length ? user.firstName : null) ||
+  (user?.email?.length ? user.email : null) ||
+  'U'
+).toUpperCase();
+
+
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Unknown User';
 
   return (
@@ -83,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => 
     >
       {/* Logo */}
       <Box sx={{ p: 3, textAlign: 'center' }}>
-       <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+        <Link to="/dashboard" style={{ textDecoration: 'none' }}>
           <img 
             src={DVALogo} 
             alt="DVA Club Logo" 
@@ -91,11 +145,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => 
               width: 120,
               height: 'auto',
               marginBottom: 12,
-              cursor: 'pointer', // ✅ Show pointer cursor
+              cursor: 'pointer',
               transition: 'opacity 0.2s ease-in-out',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.8'; // ✅ Hover effect
+              e.currentTarget.style.opacity = '0.8';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.opacity = '1';
@@ -217,19 +271,41 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => 
         </ListItem>
       </Box>
 
+      {/* ✅ UPDATED: Profile Menu with enhanced logout */}
       <Menu
         anchorEl={profileAnchor}
         open={Boolean(profileAnchor)}
         onClose={handleClose}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          }
+        }}
       >
         <MenuItem onClick={handleClose}>
           <ListItemIcon><AccountCircle /></ListItemIcon>
           <ListItemText primary="Profile Settings" />
         </MenuItem>
         <Divider />
-        <MenuItem onClick={() => { logout(); handleClose(); }}>
-          <ListItemIcon><Logout /></ListItemIcon>
-          <ListItemText primary="Logout" />
+        {/* ✅ UPDATED: Enhanced logout menu item */}
+        <MenuItem 
+          onClick={handleLogout}
+          sx={{
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor: 'error.light',
+              color: 'error.contrastText',
+            }
+          }}
+        >
+          <ListItemIcon sx={{ color: 'inherit' }}>
+            <Logout />
+          </ListItemIcon>
+          <ListItemText 
+            primary="Logout" 
+            secondary="Return to homepage"
+          />
         </MenuItem>
       </Menu>
     </Drawer>

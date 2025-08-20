@@ -39,27 +39,55 @@ const ContentArea: React.FC<ContentAreaProps> = ({ selectedModule }) => {
     <Box
       component="main"
       sx={{
-        flexGrow: 1,
+        width: '100%',
+        maxWidth: '100%', // ✅ Never exceed container width
+        height: '100%',
+        
+        // ✅ CRITICAL: Prevent horizontal scroll
+        overflowX: 'hidden',
+        overflowY: 'auto', // Only vertical scroll
+        
+        // ✅ Proper box model
+        boxSizing: 'border-box',
+        
+        // ✅ Content styling
         bgcolor: 'background.default',
         p: 3,
-        overflow: 'auto'
+        
+        // ✅ Ensure content fits
+        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
       }}
     >
-      {/* ✅ TopBar được render ở đây - không fixed */}
-      <TopBar />
+      {/* ✅ TopBar rendered inline (not fixed) */}
+      <Box sx={{ mb: 3 }}>
+        <TopBar />
+      </Box>
       
-      <Suspense 
-        fallback={
-          <Box display="flex" justifyContent="center" alignItems="center" height="200px">
-            <CircularProgress />
-          </Box>
-        }
+      {/* ✅ Module content with proper containment */}
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden', // Ensure modules don't overflow
+        }}
       >
-        {renderModule()}
-      </Suspense>
-      
+        <Suspense 
+          fallback={
+            <Box 
+              display="flex" 
+              justifyContent="center" 
+              alignItems="center" 
+              height="200px"
+            >
+              <CircularProgress />
+            </Box>
+          }
+        >
+          {renderModule()}
+        </Suspense>
+      </Box>
     </Box>
-    
   );
 };
 

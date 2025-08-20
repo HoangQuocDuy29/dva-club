@@ -7,20 +7,36 @@ import ContentArea from './components/ContentArea';
 import type { DashboardModule } from './types/dashboard.types';
 
 const SIDEBAR_WIDTH = 280;
+const TOPBAR_HEIGHT = 64;
 
 const DashboardPageContent: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<DashboardModule>('users');
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* ✅ Sidebar - Fixed position */}
+    <Box sx={{ height: '100vh', overflow: 'hidden' }}>
+      {/* TopBar */}
       <Box
         sx={{
-          width: SIDEBAR_WIDTH,
-          flexShrink: 0,
           position: 'fixed',
-          height: '100vh',
-          zIndex: 1200
+          top: 0,
+          left: 0,
+          right: 0,
+          height: TOPBAR_HEIGHT,
+          zIndex: 1300,
+        }}
+      >
+        <TopBar />
+      </Box>
+
+      {/* Sidebar */}
+      <Box
+        sx={{
+          position: 'fixed',
+          left: 0,
+          top: TOPBAR_HEIGHT,
+          bottom: 0,
+          width: SIDEBAR_WIDTH,
+          zIndex: 1200,
         }}
       >
         <Sidebar 
@@ -29,28 +45,42 @@ const DashboardPageContent: React.FC = () => {
         />
       </Box>
       
-      {/* ✅ Main Content Area */}
+      {/* ✅ FIXED: Content Area - NO HORIZONTAL SCROLL */}
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          marginLeft: `${SIDEBAR_WIDTH}px`, // Push content right
-          minHeight: '100vh',
-          display: 'flex',
-          paddingTop: '55px',
-          flexDirection: 'column'
+          position: 'fixed',
+          top: TOPBAR_HEIGHT,
+          left: SIDEBAR_WIDTH,
+          width: `calc(100vw - ${SIDEBAR_WIDTH}px)`, // ✅ Exact width calculation
+          height: `calc(100vh - ${TOPBAR_HEIGHT}px)`, // ✅ Exact height calculation
+          
+          // ✅ CRITICAL: Prevent all horizontal scrolling
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          
+          // ✅ Ensure content stays within bounds
+          boxSizing: 'border-box',
+          
+          backgroundColor: 'background.default',
+          margin: 0,
+          padding: 0,
         }}
       >
-        {/* TopBar */}
-        <TopBar />
-        
-        {/* Content */}
-        <Box sx={{ 
-          flexGrow: 1,
-          pt: 8, // Account for TopBar height
-          p: 3,
-          backgroundColor: 'background.default'
-        }}>
+        {/* Inner container with controlled padding */}
+        <Box 
+          sx={{ 
+            width: '100%',
+            maxWidth: '100%', // ✅ Never exceed container width
+            minHeight: '100%',
+            padding: 3,
+            boxSizing: 'border-box',
+            
+            // ✅ Prevent content from overflowing
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+          }}
+        >
           <ContentArea selectedModule={selectedModule} />
         </Box>
       </Box>
