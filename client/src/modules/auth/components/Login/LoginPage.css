@@ -1,0 +1,42 @@
+/* E:\2_NodeJs\DVA_Club\volleyball-club-management\client\src\modules\auth\components\Login\LoginPage.css */
+
+.login-page-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  background-image: url('/src/assets/images/logos/loginbg.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* ✅ Overlay mờ để form nổi bật hơn */
+.login-page-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Màu tối mờ 30% */
+  z-index: 1;
+}
+
+/* ✅ Responsive cho mobile */
+@media (max-width: 768px) {
+  .login-page-container {
+    padding: 20px;
+    background-attachment: scroll; /* Tránh vấn đề iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page-container {
+    padding: 10px;
+  }
+}

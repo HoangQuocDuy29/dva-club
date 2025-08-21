@@ -2,8 +2,8 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TextField, Button, Box, Paper, Typography } from "@mui/material";
-import { registerSchema, type RegisterFormData } from "../schemas";
-import { useAuth } from "../hooks/useAuth";
+import { registerSchema, type RegisterFormData } from "../../schemas";
+import { useAuth } from "../../hooks/useAuth";
 
 const RegisterForm: React.FC = () => {
   const { register: registerUser, registerError, isLoading } = useAuth();

@@ -1,5 +1,5 @@
 import { Route, Navigate } from "react-router-dom";
-import HomePage from "../../modules/common/HomePage";
+import HomePage from "../../pages/HomePage";
 import MainLayout from "../../containers/layouts/MainLayout/MainLayout";
 import { useAuthStore } from "../../modules/auth/store/authStore";
 

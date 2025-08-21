@@ -1,6 +1,6 @@
 import { Route, Navigate } from "react-router-dom";
-import { LoginPage } from "../../modules/auth/containers/LoginPage";
-import { RegisterPage } from "../../modules/auth/containers/RegisterPage";
+import { LoginPage } from "../../modules/auth/components/Login/LoginPage";
+import { RegisterPage } from "../../modules/auth/components/Register/RegisterPage";
 import { useAuthStore } from "../../modules/auth/store/authStore";
 
 // ✅ Tạo component riêng cho auth redirect

@@ -12,8 +12,10 @@ import '@fontsource/montserrat/500.css';
 import '@fontsource/montserrat/600.css';
 import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-// ✅ Theme MUI đơn giản
+// ✅ Enhanced MUI Theme
 const theme = createTheme({
   palette: {
     primary: {
@@ -22,9 +24,29 @@ const theme = createTheme({
     secondary: {
       main: '#dc004e',
     },
+    error: {
+      main: '#f44336',
+    },
+    warning: {
+      main: '#ff9800',
+    },
+    success: {
+      main: '#4caf50',
+    },
   },
   typography: {
     fontFamily: '"Montserrat", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+  components: {
+    // ✅ Global component overrides nếu cần
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontFamily: 'Montserrat, sans-serif',
+          fontWeight: 500,
+        },
+      },
+    },
   },
 })
 
@@ -37,6 +59,30 @@ function App() {
           <BrowserRouter>
             <AppRouter />
           </BrowserRouter>
+          
+          {/* ✅ Toast Container với custom styling */}
+          <ToastContainer 
+            position="top-center"
+            autoClose={4000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+            toastStyle={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '15px',
+              borderRadius: '12px',
+              fontWeight: 500,
+            }}
+            style={{
+              zIndex: 9999,
+            }}
+          />
+          
           {process.env.NODE_ENV === 'development' && (
             <ReactQueryDevtools initialIsOpen={false} />
           )}

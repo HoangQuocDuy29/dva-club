@@ -1,6 +1,6 @@
 import React from "react";
 import { Container } from "@mui/material";
-import RegisterForm from "../components/RegisterForm";
+import RegisterForm from "../../components/Register/RegisterForm";
 
 export const RegisterPage: React.FC = () => (
   <Container maxWidth="sm">
