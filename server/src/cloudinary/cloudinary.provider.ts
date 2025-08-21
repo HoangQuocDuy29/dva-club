@@ -1,3 +1,4 @@
+//E:\2_NodeJs\DVA_Club\volleyball-club-management\server\src\cloudinary\cloudinary.provider.ts
 import { v2 as cloudinary } from "cloudinary";
 
 export const CloudinaryProvider = {

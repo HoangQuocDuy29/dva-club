@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNotification } from '../../../containers/common/Notification/NotificationContext';
 import {
   Drawer,
   List,
@@ -66,51 +67,62 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => 
     setProfileAnchor(null);
   };
 
-  // ✅ Enhanced logout handler with redirect
-  const handleLogout = async () => {
-    try {
-      // ✅ Optional: Show confirmation dialog
-      const confirmLogout = window.confirm('Are you sure you want to logout?');
-      if (!confirmLogout) {
+ 
+  const { showConfirmation, showSuccess, showError } = useNotification();
+
+// ✅ ALTERNATIVE: Immediate redirect version
+const handleLogout = async () => {
+  showConfirmation(
+    'Confirm Logout',
+    'Are you sure you want to logout?',
+    async () => {
+      try {
+        console.log('🚪 Starting logout process...');
+
+        // ✅ Call logout from auth hook
+        await logout();
+
+        // ✅ Clear localStorage
+        localStorage.removeItem('auth-token');
+        localStorage.removeItem('refresh-token');
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('user-data');
+
+        console.log('✅ Logout successful - redirecting to homepage');
+
+        // ✅ Close any open menus
         handleClose();
-        return;
+
+        // ✅ Redirect immediately
+        navigate('/', { replace: true });
+
+        // ✅ Show success notification after redirect
+        setTimeout(() => {
+          showSuccess('Successfully logged out! See you again! 👋');
+        }, 100);
+
+      } catch (error) {
+        console.error('❌ Logout error:', error);
+        
+        // ✅ Force logout and redirect
+        localStorage.clear();
+        handleClose();
+        navigate('/', { replace: true });
+        
+        // ✅ Show error after redirect
+        setTimeout(() => {
+          showError('Logout completed with some issues.');
+        }, 100);
       }
-
-      console.log('🚪 Starting logout process...');
-
-      // ✅ Call logout from auth hook (clears auth state)
-      await logout();
-
-      // ✅ Additional cleanup - clear any remaining localStorage
-      localStorage.removeItem('auth-token');
-      localStorage.removeItem('refresh-token');
-      localStorage.removeItem('auth-storage');
-      localStorage.removeItem('user-data');
-
-      console.log('✅ Logout successful - redirecting to homepage');
-
-      // ✅ Close any open menus
+    },
+    () => {
+      console.log('🚫 Logout cancelled by user');
       handleClose();
-
-      // ✅ Redirect to homepage
-      navigate('/', { replace: true });
-
-      // ✅ Optional: Show success message
-      setTimeout(() => {
-        console.log('🏠 Redirected to homepage');
-      }, 100);
-
-    } catch (error) {
-      console.error('❌ Logout error:', error);
-      
-      // ✅ Force logout even if auth hook fails
-      localStorage.clear();
-      handleClose();
-      navigate('/', { replace: true });
-      
-      alert('Logout completed. You have been redirected to the homepage.');
     }
-  };
+  );
+};
+
+
 
   // ✅ Complete optional chaining
   const userInitial = (
@@ -261,9 +273,24 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedModule, onSelectModule }) => 
               </Avatar>
             </ListItemAvatar>
             <ListItemText
-              primary={<Typography variant="body2" fontWeight="medium">{fullName}</Typography>}
-              secondary={<Typography variant="caption">{user?.email || 'No email'}</Typography>}
-            />
+                primary={<Typography variant="body2" fontWeight="medium">{fullName}</Typography>}
+                secondary={
+                  <Typography 
+                    variant="caption"
+                    sx={{
+                      maxWidth: 150,       // Giới hạn chiều rộng
+                      display: 'block',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',   // Hiển thị '...'
+                    }}
+                    title={user?.email || 'No email'}   // Tooltip khi hover
+                  >
+                    {user?.email || 'No email'}
+                  </Typography>
+                }
+              />
+
             <IconButton size="small">
               <MoreVert />
             </IconButton>

@@ -1,29 +1,42 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from "@nestjs/common";
+import * as bcrypt from "bcrypt";
+import { CloudinaryService } from "../../../src/cloudinary/cloudinary.service";
 
 // Import Repository
-import { UsersRepository } from './repositories/users.repository';
+import { UsersRepository } from "./repositories/users.repository";
 
 // Import DTOs
-import { CreateUserDto, UpdateUserDto, UserQueryDto, ChangePasswordDto, UpdateProfileDto } from './dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserQueryDto,
+  ChangePasswordDto,
+  UpdateProfileDto,
+} from "./dto";
 
 // Import Interfaces
-import { 
-  UserResponse, 
-  UserListResponse, 
+import {
+  UserResponse,
+  UserListResponse,
   UserDetailResponse,
   UserStatistics,
-  ApiSuccessResponse 
-} from './interfaces';
+  ApiSuccessResponse,
+} from "./interfaces";
 
 // Import Enums
-import { UserRole } from '../auth/enums/auth-status.enum';
-import { UserAction } from './enums';
+import { UserRole } from "../auth/enums/auth-status.enum";
+import { UserAction } from "./enums";
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
+    private readonly cloudinaryService: CloudinaryService
   ) {}
 
   /**
@@ -42,7 +55,7 @@ export class UsersService {
       const summary = await this.getUsersSummary();
 
       return {
-        data: data.map(user => this.toUserResponse(user)),
+        data: data.map((user) => this.toUserResponse(user)),
         pagination: {
           page,
           limit,
@@ -55,8 +68,8 @@ export class UsersService {
           search: query.search,
           role: query.role,
           isActive: query.isActive,
-          sortBy: query.sortBy || 'createdAt',
-          sortOrder: query.sortOrder || 'DESC',
+          sortBy: query.sortBy || "createdAt",
+          sortOrder: query.sortOrder || "DESC",
           appliedFilters: {
             total: this.countAppliedFilters(query),
             filters: this.getAppliedFiltersList(query),
@@ -66,13 +79,16 @@ export class UsersService {
       };
     } catch (error) {
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Failed to get users: ' + errorMessage);
+      throw new BadRequestException("Failed to get users: " + errorMessage);
     }
   }
   /**
    * ✅ THÊM METHOD NÀY: Update user profile separately
    */
-  async updateUserProfile(userId: number, updateProfileDto: UpdateProfileDto): Promise<UserDetailResponse> {
+  async updateUserProfile(
+    userId: number,
+    updateProfileDto: UpdateProfileDto
+  ): Promise<UserDetailResponse> {
     const user = await this.usersRepository.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
@@ -81,13 +97,15 @@ export class UsersService {
     try {
       // Update profile in UserProfile table
       await this.usersRepository.updateProfile(userId, updateProfileDto);
-      
+
       // Return updated user with profile
       const updatedUser = await this.usersRepository.findById(userId);
       return this.toUserDetailResponse(updatedUser);
     } catch (error) {
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Failed to update user profile: ' + errorMessage);
+      throw new BadRequestException(
+        "Failed to update user profile: " + errorMessage
+      );
     }
   }
 
@@ -107,15 +125,19 @@ export class UsersService {
    */
   async createUser(createUserDto: CreateUserDto): Promise<UserResponse> {
     // Check if email already exists
-    const existingEmail = await this.usersRepository.findByEmail(createUserDto.email);
+    const existingEmail = await this.usersRepository.findByEmail(
+      createUserDto.email
+    );
     if (existingEmail) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException("Email already exists");
     }
 
     // Check if username already exists
-    const existingUsername = await this.usersRepository.findByUsername(createUserDto.username);
+    const existingUsername = await this.usersRepository.findByUsername(
+      createUserDto.username
+    );
     if (existingUsername) {
-      throw new ConflictException('Username already exists');
+      throw new ConflictException("Username already exists");
     }
 
     // ✅ CLEAN APPROACH - Let Global Exception Filter handle unexpected errors
@@ -126,7 +148,10 @@ export class UsersService {
   /**
    * Update user - ✅ FIXED ERROR HANDLING
    */
-  async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<UserResponse> {
+  async updateUser(
+    id: number,
+    updateUserDto: UpdateUserDto
+  ): Promise<UserResponse> {
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -150,7 +175,7 @@ export class UsersService {
       await this.usersRepository.softDelete(id);
     } catch (error) {
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Failed to delete user: ' + errorMessage);
+      throw new BadRequestException("Failed to delete user: " + errorMessage);
     }
   }
 
@@ -169,14 +194,17 @@ export class UsersService {
         throw error; // Re-throw NotFoundException as is
       }
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Failed to restore user: ' + errorMessage);
+      throw new BadRequestException("Failed to restore user: " + errorMessage);
     }
   }
 
   /**
    * Change user password (Admin only)
    */
-  async changeUserPassword(id: number, changePasswordDto: ChangePasswordDto): Promise<void> {
+  async changeUserPassword(
+    id: number,
+    changePasswordDto: ChangePasswordDto
+  ): Promise<void> {
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -184,16 +212,22 @@ export class UsersService {
 
     // Validate password confirmation
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
-      throw new BadRequestException('Password confirmation does not match');
+      throw new BadRequestException("Password confirmation does not match");
     }
 
-    await this.usersRepository.changePassword(id, changePasswordDto.newPassword);
+    await this.usersRepository.changePassword(
+      id,
+      changePasswordDto.newPassword
+    );
   }
 
   /**
-   * Upload user avatar - ✅ ENHANCED VALIDATION
+   * ✅ UPDATED: Upload user avatar to Cloudinary
    */
-  async uploadAvatar(userId: number, file: any): Promise<string> {
+  async uploadAvatar(
+    userId: number,
+    file: Express.Multer.File
+  ): Promise<string> {
     const user = await this.usersRepository.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
@@ -203,33 +237,67 @@ export class UsersService {
     this.validateUploadFile(file);
 
     try {
-      const fileName = this.generateAvatarFileName(userId, file);
-      const avatarUrl = `http://localhost:3001/storage/uploads/users/avatars/${fileName}`;
+      // ✅ Upload to Cloudinary instead of local storage
+      const uploadResult = await this.cloudinaryService.uploadFile(file, {
+        folder: "users/avatars",
+        public_id: `user-${userId}-avatar`,
+        overwrite: true,
+        transformation: [
+          { width: 400, height: 400, crop: "fill" },
+          { quality: "auto" },
+          { fetch_format: "auto" },
+        ],
+      });
 
+      const avatarUrl = uploadResult.secure_url;
+
+      // ✅ Update user record with Cloudinary URL
       await this.usersRepository.updateAvatar(userId, avatarUrl);
+
       return avatarUrl;
     } catch (error) {
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Failed to upload avatar: ' + errorMessage);
+      throw new BadRequestException(
+        "Failed to upload avatar to Cloudinary: " + errorMessage
+      );
     }
+  }
+  /**
+   * ✅ NEW: Separate method to update avatar URL only
+   */
+  async updateUserAvatar(userId: number, avatarUrl: string): Promise<void> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    await this.usersRepository.updateAvatar(userId, avatarUrl);
   }
 
   /**
    * Search users - ✅ ENHANCED ERROR HANDLING
    */
-  async searchUsers(keyword: string, query: UserQueryDto): Promise<UserListResponse> {
+  async searchUsers(
+    keyword: string,
+    query: UserQueryDto
+  ): Promise<UserListResponse> {
     if (!keyword || keyword.trim().length < 2) {
-      throw new BadRequestException('Search keyword must be at least 2 characters long');
+      throw new BadRequestException(
+        "Search keyword must be at least 2 characters long"
+      );
     }
 
     try {
-      const { data, total } = await this.usersRepository.search(keyword.trim(), query);
+      const { data, total } = await this.usersRepository.search(
+        keyword.trim(),
+        query
+      );
       const { page = 1, limit = 20 } = query;
 
       const totalPages = Math.ceil(total / limit);
 
       return {
-        data: data.map(user => this.toUserResponse(user)),
+        data: data.map((user) => this.toUserResponse(user)),
         pagination: {
           page,
           limit,
@@ -242,8 +310,8 @@ export class UsersService {
           search: keyword,
           role: query.role,
           isActive: query.isActive,
-          sortBy: query.sortBy || 'createdAt',
-          sortOrder: query.sortOrder || 'DESC',
+          sortBy: query.sortBy || "createdAt",
+          sortOrder: query.sortOrder || "DESC",
           appliedFilters: {
             total: this.countAppliedFilters({ ...query, search: keyword }),
             filters: this.getAppliedFiltersList({ ...query, search: keyword }),
@@ -253,7 +321,7 @@ export class UsersService {
       };
     } catch (error) {
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Search failed: ' + errorMessage);
+      throw new BadRequestException("Search failed: " + errorMessage);
     }
   }
 
@@ -263,7 +331,8 @@ export class UsersService {
   async getUserStatistics(): Promise<UserStatistics> {
     try {
       const stats = await this.usersRepository.getStatistics();
-      const recentActiveUsers = await this.usersRepository.getRecentlyActiveUsers(10);
+      const recentActiveUsers =
+        await this.usersRepository.getRecentlyActiveUsers(10);
 
       return {
         overview: {
@@ -288,10 +357,12 @@ export class UsersService {
             thisMonth: stats.recentRegistrations.thisMonth,
           },
           registrationTrend: [],
-          mostActiveUsers: recentActiveUsers.map(user => ({
+          mostActiveUsers: recentActiveUsers.map((user) => ({
             id: user.id,
             username: user.username,
-            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+            fullName:
+              `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+              user.username,
             lastLogin: user.lastLogin,
             loginCount: 0,
           })),
@@ -318,7 +389,9 @@ export class UsersService {
       };
     } catch (error) {
       const errorMessage = this.getErrorMessage(error);
-      throw new BadRequestException('Failed to get user statistics: ' + errorMessage);
+      throw new BadRequestException(
+        "Failed to get user statistics: " + errorMessage
+      );
     }
   }
 
@@ -327,7 +400,7 @@ export class UsersService {
    */
   async getUsersByRole(role: UserRole): Promise<UserResponse[]> {
     const users = await this.usersRepository.findByRole(role);
-    return users.map(user => this.toUserResponse(user));
+    return users.map((user) => this.toUserResponse(user));
   }
 
   // ================== PRIVATE HELPER METHODS ==================
@@ -339,16 +412,16 @@ export class UsersService {
     if (error instanceof Error) {
       return error.message;
     }
-    
-    if (typeof error === 'string') {
+
+    if (typeof error === "string") {
       return error;
     }
-    
-    if (error && typeof error === 'object' && 'message' in error) {
+
+    if (error && typeof error === "object" && "message" in error) {
       return String((error as any).message);
     }
-    
-    return 'Unknown error occurred';
+
+    return "Unknown error occurred";
   }
 
   /**
@@ -356,27 +429,29 @@ export class UsersService {
    */
   private validateUploadFile(file: any): void {
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException("No file uploaded");
     }
 
-    if (!file.originalname || typeof file.originalname !== 'string') {
-      throw new BadRequestException('Invalid file name');
+    if (!file.originalname || typeof file.originalname !== "string") {
+      throw new BadRequestException("Invalid file name");
     }
 
     if (!file.mimetype || !file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-      throw new BadRequestException('Only image files are allowed (jpg, jpeg, png, gif, webp)');
+      throw new BadRequestException(
+        "Only image files are allowed (jpg, jpeg, png, gif, webp)"
+      );
     }
 
-    if (!file.size || typeof file.size !== 'number') {
-      throw new BadRequestException('Invalid file size');
+    if (!file.size || typeof file.size !== "number") {
+      throw new BadRequestException("Invalid file size");
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      throw new BadRequestException('File size cannot exceed 5MB');
+      throw new BadRequestException("File size cannot exceed 5MB");
     }
 
     if (file.size < 1024) {
-      throw new BadRequestException('File too small (minimum 1KB)');
+      throw new BadRequestException("File too small (minimum 1KB)");
     }
   }
 
@@ -390,7 +465,9 @@ export class UsersService {
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
-      fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+      fullName:
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+        user.username,
       phone: user.phone,
       avatarUrl: user.avatarUrl,
       role: user.role,
@@ -407,14 +484,16 @@ export class UsersService {
   private toUserDetailResponse(user: any): UserDetailResponse {
     return {
       ...this.toUserResponse(user),
-      profile: user.profile ? {
-        dateOfBirth: user.profile.dateOfBirth,
-        gender: user.profile.gender,
-        address: user.profile.address,
-        emergencyContact: user.profile.emergencyContact,
-        bio: user.profile.bio,
-        socialLinks: user.profile.socialLinks,
-      } : undefined,
+      profile: user.profile
+        ? {
+            dateOfBirth: user.profile.dateOfBirth,
+            gender: user.profile.gender,
+            address: user.profile.address,
+            emergencyContact: user.profile.emergencyContact,
+            bio: user.profile.bio,
+            socialLinks: user.profile.socialLinks,
+          }
+        : undefined,
       statistics: {
         totalMatches: 0,
         totalWins: 0,
@@ -445,7 +524,7 @@ export class UsersService {
     let count = 0;
     if (query.search) count++;
     if (query.role) count++;
-    if (typeof query.isActive === 'boolean') count++;
+    if (typeof query.isActive === "boolean") count++;
     return count;
   }
 
@@ -456,7 +535,8 @@ export class UsersService {
     const filters: string[] = [];
     if (query.search) filters.push(`search:"${query.search}"`);
     if (query.role) filters.push(`role:${query.role}`);
-    if (typeof query.isActive === 'boolean') filters.push(`status:${query.isActive ? 'active' : 'inactive'}`);
+    if (typeof query.isActive === "boolean")
+      filters.push(`status:${query.isActive ? "active" : "inactive"}`);
     return filters;
   }
 
@@ -466,7 +546,7 @@ export class UsersService {
   private generateAvatarFileName(userId: number, file: any): string {
     const timestamp = Date.now();
     const extension = this.extractFileExtension(file.originalname);
-    const datePath = new Date().toISOString().slice(0, 7).replace('-', '/');
+    const datePath = new Date().toISOString().slice(0, 7).replace("-", "/");
     return `${datePath}/user-${userId}-avatar-${timestamp}.${extension}`;
   }
 
@@ -474,15 +554,17 @@ export class UsersService {
    * ✅ SAFE FILE EXTENSION EXTRACTION
    */
   private extractFileExtension(filename: any): string {
-    if (!filename || typeof filename !== 'string') {
-      return 'jpg'; // fallback
+    if (!filename || typeof filename !== "string") {
+      return "jpg"; // fallback
     }
-    
-    const parts = filename.split('.');
-    const extension = parts.length > 1 ? parts.pop()?.toLowerCase() : 'jpg';
-    
+
+    const parts = filename.split(".");
+    const extension = parts.length > 1 ? parts.pop()?.toLowerCase() : "jpg";
+
     // Validate extension
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    return (extension && allowedExtensions.includes(extension)) ? extension : 'jpg';
+    const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+    return extension && allowedExtensions.includes(extension)
+      ? extension
+      : "jpg";
   }
 }

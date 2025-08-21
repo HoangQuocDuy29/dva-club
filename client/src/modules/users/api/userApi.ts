@@ -103,8 +103,16 @@ export const userApi = {
 
   // ✅ GET /users/:id/profile - MISSING METHOD ADDED
   getUserProfile: async (id: number): Promise<UserProfile> => {
+    console.log("📤 API: Fetching profile for user ID:", id);
+
     const response = await userClient.get(`/${id}/profile`);
-    return response.data.data || response.data;
+    console.log("📥 API: Raw response:", response.data);
+
+    // ✅ FIX: Extract data from nested structure
+    const profileData = response.data?.data || response.data;
+    console.log("📥 API: Extracted profile data:", profileData);
+
+    return profileData;
   },
 
   // ✅ PUT /users/:id/profile - MISSING METHOD ADDED
@@ -112,7 +120,13 @@ export const userApi = {
     id: number,
     profileData: Partial<UserProfile>
   ): Promise<UserProfile> => {
+    console.log("📤 API: Updating profile for user ID:", id);
+    console.log("📤 API: Profile data:", profileData);
+
     const response = await userClient.put(`/${id}/profile`, profileData);
+
+    console.log("📥 API: Profile update response:", response.data);
+
     return response.data.data || response.data;
   },
 
@@ -126,23 +140,20 @@ export const userApi = {
 
   // ✅ POST /users/:id/avatar - MISSING METHOD ADDED
   uploadAvatar: async (
-    id: number,
-    avatarFile: FormData
-  ): Promise<AvatarUploadResponse> => {
-    const response = await userClient.post(`/${id}/avatar`, avatarFile, {
+    userId: number,
+    file: File
+  ): Promise<{ avatarUrl: string }> => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const response = await userClient.post(`/${userId}/avatar`, formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
       },
     });
+
     return response.data.data || response.data;
   },
-
-  // ✅ PUT /users/:id/restore - MISSING METHOD ADDED
-  restoreUser: async (id: number): Promise<User> => {
-    const response = await userClient.put(`/${id}/restore`);
-    return response.data.data || response.data;
-  },
-
   // ✅ GET /users/search/:query - EXISTING
   searchUsers: async (
     query: string,

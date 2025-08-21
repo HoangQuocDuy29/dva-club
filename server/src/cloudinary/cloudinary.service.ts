@@ -1,3 +1,4 @@
+//E:\2_NodeJs\DVA_Club\volleyball-club-management\server\src\cloudinary\cloudinary.service.ts
 import { Injectable } from "@nestjs/common";
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from "cloudinary";
 import toStream = require("streamifier");
@@ -9,9 +10,21 @@ export class CloudinaryService {
     options?: any
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
     return new Promise((resolve, reject) => {
+      // ✅ Validate file buffer exists
+      if (!file || !file.buffer) {
+        return reject(new Error('File buffer is required'));
+      }
+
+      console.log('📤 Starting Cloudinary upload:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferLength: file.buffer.length
+      });
+
       const uploadStream = v2.uploader.upload_stream(
         {
-          resource_type: "auto", // Auto-detect file type
+          resource_type: "auto",
           folder: options?.folder || "volleyball-club",
           public_id: options?.public_id,
           overwrite: options?.overwrite || true,
@@ -22,12 +35,22 @@ export class CloudinaryService {
           ...options,
         },
         (error, result) => {
-          if (error) return reject(error);
+          if (error) {
+            console.error('❌ Cloudinary upload error:', error);
+            return reject(error);
+          }
+          console.log('✅ Cloudinary upload success:', result?.public_id);
           resolve(result);
         }
       );
 
-      toStream.createReadStream(file.buffer).pipe(uploadStream);
+      // ✅ Create readable stream from buffer with error handling
+      try {
+        toStream.createReadStream(file.buffer).pipe(uploadStream);
+      } catch (streamError) {
+        console.error('❌ Stream creation error:', streamError);
+        reject(streamError);
+      }
     });
   }
 

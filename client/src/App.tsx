@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { queryClient } from './services/api/client'
 import { AppRouter } from './router/AppRouter'
+import { NotificationProvider } from './containers/common/Notification/NotificationContext'
 import { useAuthStore } from './modules/auth/store/authStore' // ✅ Add import
 import '@fontsource/montserrat/300.css';
 import '@fontsource/montserrat/400.css';
@@ -92,6 +93,7 @@ const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
 function App() {
   return (
+    <NotificationProvider>
     <div style={{ fontFamily: 'Montserrat, sans-serif' }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
@@ -131,6 +133,7 @@ function App() {
         </ThemeProvider>
       </QueryClientProvider>
     </div>
+    </NotificationProvider>
   )
 }
 

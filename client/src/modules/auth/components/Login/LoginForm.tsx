@@ -5,17 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "../../schemas";
 import { useAuth } from "../../hooks/useAuth";
 import { FaUserAlt, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import { toast } from "react-toastify";
 import "./LoginForm.css";
-
-// Icon components for toast
-const LockIcon = () => <span role="img" aria-label="lock">🔐</span>;
-const WarningIcon = () => <span role="img" aria-label="warning">⚠️</span>;
-const FireIcon = () => <span role="img" aria-label="fire">🔥</span>;
-const NetworkIcon = () => <span role="img" aria-label="network">🌐</span>;
-const ErrorIcon = () => <span role="img" aria-label="error">❌</span>;
+import { useNotification } from "../../../../containers/common/Notification/NotificationContext";
 
 const LoginForm: React.FC = () => {
+  const { showSuccess, showError } = useNotification();
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   
@@ -39,30 +33,29 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data);
+      const response = await login(data);
+      
+      // ✅ Show custom success notification with user's name
+      const userName = response?.user?.firstName || 'User';
+      showSuccess(`Welcome back, ${userName}! Login successful! 🎉`);
+      
+      // ✅ Optional: Add slight delay before redirect to show notification
+      // The redirect will be handled by the useAuth hook or auth context
+      
     } catch (error: any) {
       console.error('Login failed:', error);
       
+      // ✅ Replace toast.error with custom showError notifications
       if (error?.response?.status === 401) {
-        toast.error("Sai thông tin đăng nhập! Vui lòng kiểm tra email và mật khẩu.", {
-          icon: LockIcon
-        });
+        showError("🔐 Incorrect login credentials! Please check your email and password.");
       } else if (error?.response?.status === 422) {
-        toast.error("Thông tin không hợp lệ! Vui lòng kiểm tra lại.", {
-          icon: WarningIcon
-        });
+        showError("⚠️ Invalid information! Please check your input.");
       } else if (error?.response?.status >= 500) {
-        toast.error("Lỗi server! Vui lòng thử lại sau.", {
-          icon: FireIcon
-        });
+        showError("🔥 Server error! Please try again later.");
       } else if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Network')) {
-        toast.error("Không thể kết nối server! Kiểm tra kết nối mạng.", {
-          icon: NetworkIcon
-        });
+        showError("🌐 Unable to connect to server! Check your network connection.");
       } else {
-        toast.error("Đăng nhập thất bại! Vui lòng thử lại.", {
-          icon: ErrorIcon
-        });
+        showError("❌ Login failed! Please try again.");
       }
     }
   };
@@ -70,7 +63,7 @@ const LoginForm: React.FC = () => {
   return (
     <div className="wrapper">
       <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
-        <h1>Login</h1>
+        <h1>Login DVA</h1>
         
         {/* ✅ Email Input */}
         <div className="input-box">
@@ -128,8 +121,6 @@ const LoginForm: React.FC = () => {
         <button type="submit" disabled={isLoading} tabIndex={3}>
           {isLoading ? "Đang đăng nhập..." : "Login"}
         </button>
-        
-        
       </form>
     </div>
   );

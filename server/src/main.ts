@@ -7,7 +7,7 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import { AppModule } from "./app.module";
 import { initializeDatabase } from "./database/data-source";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
-
+import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 async function bootstrap() {
   try {
     console.log("🔄 Initializing database...");

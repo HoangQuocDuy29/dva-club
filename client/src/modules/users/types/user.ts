@@ -8,6 +8,7 @@ export interface User {
   isActive: boolean;
   lastLogin: string;
   avatar?: string;
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -22,27 +23,44 @@ export interface UserDetail extends User {
 }
 
 export interface UserProfile {
-  id: number;
-  userId: number;
+  // Basic profile info
+  dateOfBirth?: string;
+  gender?: "male" | "female" | "other";
+  address?: string;
   bio?: string;
-  position?: string;
-  teamName?: string;
-  achievements?: string[];
-  socialLinks?: {
-    facebook?: string;
-    instagram?: string;
-    twitter?: string;
-  };
+
+  // Emergency contact
   emergencyContact?: {
     name: string;
     phone: string;
     relationship: string;
   };
+
+  // Social links
+  socialLinks?: {
+    twitter?: string;
+    facebook?: string;
+    instagram?: string;
+  };
+
+  // Optional legacy fields (keep for backward compatibility)
+  id?: number;
+  userId?: number;
+  position?: string;
+  teamName?: string;
+  achievements?: string[];
   medicalInfo?: {
     allergies?: string[];
     medications?: string[];
     emergencyNotes?: string;
   };
+}
+// ✅ NEW: API Response type cho profile
+export interface UserProfileResponse {
+  success: boolean;
+  message: string;
+  data: UserProfile;
+  timestamp: string;
 }
 
 export interface CreateUserRequest {
@@ -63,6 +81,7 @@ export interface UpdateUserRequest {
   email: string;
   role: "admin" | "coach" | "player" | "manager" | "viewer";
   isActive: boolean;
+  avatar?: string;
 }
 
 export interface PaginatedResponse<T> {

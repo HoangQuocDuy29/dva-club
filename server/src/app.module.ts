@@ -24,6 +24,7 @@ import { TeamsModule } from "./modules/teams/teams.module";
 import { PlayerStatisticsModule } from "./modules/player-statistics/player-statistics.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { MediaModule } from "./modules/media/media.module";
+import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 @Module({
   imports: [
     // ✅ THÊM SERVESTATICMODULE VÀO ĐẦU IMPORTS ARRAY
@@ -71,6 +72,7 @@ import { MediaModule } from "./modules/media/media.module";
     NotificationsModule,
 
     MediaModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
