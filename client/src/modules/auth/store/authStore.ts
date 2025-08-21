@@ -1,6 +1,8 @@
+// E:\2_NodeJs\DVA_Club\volleyball-club-management\client\src\modules\auth\store\authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "../types";
+import { TokenStorage } from "../../../utils/tokenStorage";
 
 interface AuthStore {
   // State
@@ -23,27 +25,36 @@ interface AuthStore {
   setToken: (token: string) => void;
   clearAuth: () => void;
   initializeAuth: () => Promise<void>;
+  refreshAuthToken: () => Promise<boolean>; // ✅ New: Auto refresh function
+  syncTokens: () => void; // ✅ New: Sync with TokenStorage
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      // Initial state
+      // Initial state với TokenStorage sync
       user: null,
-      token: null,
-      refreshToken: null,
-      isAuthenticated: false,
+      token: TokenStorage.getAuthToken(),
+      refreshToken: TokenStorage.getRefreshToken(),
+      isAuthenticated: TokenStorage.isAuthenticated(),
       isLoading: false,
 
-      // Actions
+      // ✅ UPDATED: Enhanced login với TokenStorage
       login: (user, token, refreshToken, navigate) => {
-        localStorage.setItem("auth-token", token);
-        localStorage.setItem("refresh-token", refreshToken);
+        console.log("🔐 Auth store login:", {
+          hasToken: !!token,
+          hasRefreshToken: !!refreshToken,
+          tokenValid: token && token !== "undefined",
+        });
+
+        // ✅ Use TokenStorage for safe token storage
+        TokenStorage.setAuthToken(token);
+        TokenStorage.setRefreshToken(refreshToken);
 
         set({
           user,
-          token,
-          refreshToken,
+          token: TokenStorage.getAuthToken(), // ✅ Get validated token
+          refreshToken: TokenStorage.getRefreshToken(),
           isAuthenticated: true,
           isLoading: false,
         });
@@ -56,9 +67,10 @@ export const useAuthStore = create<AuthStore>()(
         }, 100);
       },
 
+      // ✅ UPDATED: Enhanced logout với TokenStorage
       logout: (navigate) => {
-        localStorage.removeItem("auth-token");
-        localStorage.removeItem("refresh-token");
+        console.log("🚪 Logging out and clearing tokens");
+        TokenStorage.clearTokens();
 
         set({
           user: null,
@@ -75,14 +87,21 @@ export const useAuthStore = create<AuthStore>()(
 
       setUser: (user) => set({ user }),
       setLoading: (isLoading) => set({ isLoading }),
+
+      // ✅ UPDATED: Enhanced setToken với TokenStorage
       setToken: (token) => {
-        localStorage.setItem("auth-token", token);
-        set({ token });
+        console.log("🔄 Setting new token");
+        TokenStorage.setAuthToken(token);
+        set({
+          token: TokenStorage.getAuthToken(),
+          isAuthenticated: TokenStorage.isAuthenticated(),
+        });
       },
 
+      // ✅ UPDATED: Enhanced clearAuth với TokenStorage
       clearAuth: () => {
-        localStorage.removeItem("auth-token");
-        localStorage.removeItem("refresh-token");
+        console.log("🧹 Clearing all auth data");
+        TokenStorage.clearTokens();
         set({
           user: null,
           token: null,
@@ -92,67 +111,148 @@ export const useAuthStore = create<AuthStore>()(
         });
       },
 
-      // authStore.ts - initializeAuth
-      initializeAuth: async (): Promise<void> => {
-        return new Promise((resolve) => {
-          const state = get();
-          let tokenFromStorage = localStorage.getItem("auth-token");
+      // ✅ NEW: Auto refresh token function
+      refreshAuthToken: async (): Promise<boolean> => {
+        console.log("🔄 Attempting to refresh auth token...");
 
-          // ✅ CHECK for "undefined" string
-          if (tokenFromStorage === "undefined" || tokenFromStorage === "null") {
-            console.log("🚨 Found invalid token string, clearing...");
-            localStorage.removeItem("auth-token");
-            tokenFromStorage = null;
+        const currentRefreshToken =
+          get().refreshToken || TokenStorage.getRefreshToken();
+
+        if (!currentRefreshToken) {
+          console.log("❌ No refresh token available");
+          get().clearAuth();
+          return false;
+        }
+
+        try {
+          // Import authService để gọi refresh API
+          const { authService } = await import("../services/authService");
+          const response = await authService.refreshToken(currentRefreshToken);
+
+          const { token, user } = response;
+
+          if (token && token !== "undefined") {
+            console.log("✅ Token refreshed successfully");
+
+            // Update tokens
+            TokenStorage.setAuthToken(token);
+
+            // Update store
+            set({
+              token: TokenStorage.getAuthToken(),
+              user: user || get().user, // Keep existing user if not provided
+              isAuthenticated: true,
+            });
+
+            return true;
+          } else {
+            throw new Error("Invalid token received from refresh");
           }
+        } catch (error) {
+          console.error("❌ Token refresh failed:", error);
+          get().clearAuth();
+          return false;
+        }
+      },
 
-          console.log("🔍 Debug initializeAuth:", {
+      // ✅ NEW: Sync tokens between store and TokenStorage
+      syncTokens: () => {
+        const state = get();
+        const storageAuthToken = TokenStorage.getAuthToken();
+        const storageRefreshToken = TokenStorage.getRefreshToken();
+
+        // Sync auth token
+        if (state.token !== storageAuthToken) {
+          if (storageAuthToken && !state.token) {
+            // Storage has token but store doesn't - sync to store
+            set({ token: storageAuthToken, isAuthenticated: true });
+            console.log("🔄 Synced auth token from storage to store");
+          } else if (state.token && !storageAuthToken) {
+            // Store has token but storage doesn't - sync to storage
+            TokenStorage.setAuthToken(state.token);
+            console.log("🔄 Synced auth token from store to storage");
+          }
+        }
+
+        // Sync refresh token
+        if (state.refreshToken !== storageRefreshToken) {
+          if (storageRefreshToken && !state.refreshToken) {
+            set({ refreshToken: storageRefreshToken });
+            console.log("🔄 Synced refresh token from storage to store");
+          } else if (state.refreshToken && !storageRefreshToken) {
+            TokenStorage.setRefreshToken(state.refreshToken);
+            console.log("🔄 Synced refresh token from store to storage");
+          }
+        }
+      },
+
+      // ✅ UPDATED: Enhanced initializeAuth với auto-refresh logic
+      initializeAuth: async (): Promise<void> => {
+        return new Promise(async (resolve) => {
+          console.log("🚀 Initializing auth...");
+
+          const state = get();
+
+          // First, sync tokens between store and storage
+          get().syncTokens();
+
+          const authToken = TokenStorage.getAuthToken();
+          const refreshToken = TokenStorage.getRefreshToken();
+
+          console.log("🔍 Auth initialization check:", {
             hasUser: !!state.user,
-            hasTokenInState: !!state.token,
-            hasTokenInStorage: !!tokenFromStorage,
-            tokenFromStorage:
-              tokenFromStorage?.substring(0, 30) + "..." || "NO TOKEN",
-            userRole: state.user?.role,
+            hasAuthToken: !!authToken,
+            hasRefreshToken: !!refreshToken,
+            authTokenPreview: authToken?.substring(0, 20) + "..." || "NO TOKEN",
           });
 
-          // ✅ CHỈ SET AUTHENTICATED NẾU CÓ VALID TOKEN
-          if (
-            state.user &&
-            state.token &&
-            tokenFromStorage &&
-            tokenFromStorage !== "undefined"
-          ) {
+          if (state.user && authToken) {
+            // Perfect case: có cả user và auth token
             set({
-              token: state.token,
+              token: authToken,
+              refreshToken: refreshToken,
               isAuthenticated: true,
             });
             console.log(
               "✅ Auth initialized: user authenticated with valid token"
             );
-          } else if (
-            state.user &&
-            tokenFromStorage &&
-            tokenFromStorage !== "undefined"
-          ) {
-            set({
-              token: tokenFromStorage,
-              isAuthenticated: true,
-            });
-            console.log("✅ Auth initialized: token synced from storage");
-          } else {
-            console.log("🚨 No valid token found - clearing auth state");
-            set({
-              user: null,
-              token: null,
-              refreshToken: null,
-              isAuthenticated: false,
-            });
-            // Clear invalid storage
-            localStorage.removeItem("auth-token");
-            localStorage.removeItem("refresh-token");
-            localStorage.removeItem("auth-storage");
-          }
+            resolve();
+          } else if (state.user && !authToken && refreshToken) {
+            // Case cần fix: có user và refresh token nhưng không có auth token
+            console.log(
+              "🔄 User exists but no auth token - attempting auto refresh..."
+            );
 
-          setTimeout(resolve, 50);
+            const refreshSuccess = await get().refreshAuthToken();
+
+            if (refreshSuccess) {
+              console.log("✅ Auth initialized: token refreshed successfully");
+            } else {
+              console.log(
+                "❌ Auth initialization failed: could not refresh token"
+              );
+              get().clearAuth();
+            }
+            resolve();
+          } else if (!state.user && refreshToken) {
+            // Case: có refresh token nhưng không có user - try refresh
+            console.log(
+              "🔄 No user but refresh token exists - attempting to restore session..."
+            );
+
+            const refreshSuccess = await get().refreshAuthToken();
+
+            if (!refreshSuccess) {
+              console.log("❌ Session restoration failed");
+              get().clearAuth();
+            }
+            resolve();
+          } else {
+            // Case: không có gì hợp lệ - clear all
+            console.log("🚨 No valid tokens found - clearing auth state");
+            get().clearAuth();
+            resolve();
+          }
         });
       },
     }),
@@ -164,11 +264,28 @@ export const useAuthStore = create<AuthStore>()(
         refreshToken: state.refreshToken,
       }),
 
-      // ✅ FORCE SET isAuthenticated khi rehydrate
+      // ✅ UPDATED: Enhanced rehydration
       onRehydrateStorage: () => (state) => {
-        if (state?.token && state?.user) {
-          state.isAuthenticated = true;
-          console.log("✅ Rehydrated: user authenticated");
+        if (state) {
+          console.log("🔄 Rehydrating auth store...");
+
+          // Validate rehydrated data
+          const hasValidToken =
+            state.token &&
+            state.token !== "undefined" &&
+            state.token !== "null";
+          const hasValidUser = state.user && typeof state.user === "object";
+
+          if (hasValidUser && hasValidToken) {
+            state.isAuthenticated = true;
+            console.log("✅ Rehydrated: user authenticated");
+          } else {
+            // Clear invalid rehydrated data
+            console.log(
+              "🚨 Rehydration: invalid data detected, will clear on init"
+            );
+            state.isAuthenticated = false;
+          }
         }
       },
     }

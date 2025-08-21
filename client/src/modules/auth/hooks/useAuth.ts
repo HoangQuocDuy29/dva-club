@@ -1,7 +1,9 @@
+// E:\2_NodeJs\DVA_Club\volleyball-club-management\client\src\modules\auth\hooks\useAuth.ts
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { authService } from "../services/authService";
+import { TokenStorage } from "../../../utils/tokenStorage";
 import type { LoginFormData, RegisterFormData } from "../schemas";
 import type { AuthResponse, User, ApiError } from "../types";
 
@@ -10,87 +12,144 @@ export const useAuth = () => {
   const {
     user,
     setUser,
-    clearAuth, // ✅ Sử dụng clearAuth thay vì clearUser
+    clearAuth,
     isAuthenticated,
     isLoading,
     login: loginStore,
     logout: logoutStore,
     setLoading,
+    refreshAuthToken,
+    syncTokens,
   } = useAuthStore();
 
-  // Login mutation
+  // ✅ FIXED: Adapted login mutation cho backend structure
   const loginMutation = useMutation<AuthResponse, ApiError, LoginFormData>({
     mutationFn: authService.login,
     onMutate: () => setLoading(true),
     onSuccess: (response) => {
-      const { user, token, refreshToken } = response;
-      // ✅ Pass navigate function to store
-      loginStore(user, token, refreshToken, navigate);
+      console.log("✅ Login mutation success:", {
+        hasUser: !!response.user,
+        hasToken: !!response.token,
+        hasAccessToken: !!response.accessToken, // ✅ Check alternative field names
+        hasRefreshToken: !!response.refreshToken,
+        responseKeys: Object.keys(response), // ✅ Debug all keys
+        fullResponse: response, // ✅ Log full response structure
+      });
 
+      const { user, refreshToken } = response;
+
+      // ✅ ADAPTED: Try different token field names từ backend
+      const token =
+        response.token ||
+        response.accessToken ||
+        response.access_token ||
+        refreshToken; // ✅ Fallback to refreshToken if no access token
+
+      console.log("🔍 Token extraction:", {
+        extractedToken: token ? `${token.substring(0, 20)}...` : "NO TOKEN",
+        tokenSource: response.token
+          ? "token"
+          : response.accessToken
+          ? "accessToken"
+          : response.access_token
+          ? "access_token"
+          : refreshToken
+          ? "refreshToken (fallback)"
+          : "NONE",
+      });
+
+      // ✅ RELAXED: Accept refreshToken as access token nếu không có token riêng
+      if (!token) {
+        console.error(
+          "❌ No token found in any expected fields:",
+          Object.keys(response)
+        );
+        throw new Error(
+          "No token received from login API - check backend response structure"
+        );
+      }
+
+      loginStore(user, token, refreshToken, navigate);
       setLoading(false);
     },
     onError: (error: any) => {
       console.error("Login error:", error);
       setLoading(false);
+      clearAuth();
     },
   });
 
-  // Register mutation
+  // ✅ FIXED: Same adaptation cho register
   const registerMutation = useMutation({
     mutationFn: authService.register,
     onMutate: () => setLoading(true),
     onSuccess: (response) => {
-      const { user, token, refreshToken } = response;
-      // ✅ Pass navigate function to store, redirect theo role
+      const { user, refreshToken } = response;
+
+      // Same token extraction logic
+      const token =
+        response.token ||
+        response.accessToken ||
+        response.access_token ||
+        refreshToken;
+
+      if (!token) {
+        throw new Error("No token received from register API");
+      }
+
       loginStore(user, token, refreshToken, navigate);
       setLoading(false);
     },
     onError: (error: any) => {
       console.error("Register error:", error);
       setLoading(false);
+      clearAuth();
     },
   });
 
-  // Logout mutation - không cần gọi API nếu backend không có logout endpoint
-  const logout = () => {
+  // ✅ Rest of the hook remains the same
+  const logout = async () => {
     try {
-      // ✅ Có thể thêm API call nếu backend có logout endpoint
-      // await authService.logout();
-
-      // ✅ Pass navigate function to store
-      logoutStore(navigate);
+      console.log("🚪 Logging out user");
     } catch (error) {
-      console.error("Logout error:", error);
-      // Logout locally even if server request fails
+      console.error("Logout API error:", error);
+    } finally {
       logoutStore(navigate);
     }
   };
 
-  // Get profile query
+  const refreshToken = async () => {
+    console.log("🔄 Manual token refresh requested");
+    return await refreshAuthToken();
+  };
+
+  const syncAuthTokens = () => {
+    console.log("🔄 Manual token sync requested");
+    syncTokens();
+  };
+
+  // ✅ SIMPLIFIED: Profile query without auto-refresh (để tránh complexity)
   const profileQuery = useQuery({
     queryKey: ["auth", "profile"],
     queryFn: authService.getProfile,
     enabled: isAuthenticated && !!user,
     retry: 1,
-    staleTime: 5 * 60 * 1000, // ✅ Cache 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Login function
   const login = async (data: LoginFormData) => {
+    console.log("🔐 Login attempt with data:", { email: data.email });
     return loginMutation.mutateAsync(data);
   };
 
-  // Register function
   const register = async (data: RegisterFormData) => {
     return registerMutation.mutateAsync(data);
   };
 
-  // ✅ Check if user has specific role
   const hasRole = (role: string) => {
     return user?.role === role;
   };
 
-  // ✅ Check if user is admin
   const isAdmin = () => {
     return user?.role === "admin";
   };
@@ -106,8 +165,10 @@ export const useAuth = () => {
     login,
     register,
     logout,
+    refreshToken,
+    syncAuthTokens,
 
-    // Role checks - ✅ Helper functions
+    // Role checks
     hasRole,
     isAdmin,
 
@@ -119,8 +180,6 @@ export const useAuth = () => {
     profile: profileQuery.data,
     profileLoading: profileQuery.isLoading,
     profileError: profileQuery.error,
-
-    // ✅ Profile refetch function
     refetchProfile: profileQuery.refetch,
   };
 };

@@ -39,6 +39,8 @@ export interface AuthResponse {
   user: User;
   token: string;
   refreshToken: string;
+  accessToken?: string;
+  access_token?: string;
 }
 
 export interface ForgotPasswordRequest {
