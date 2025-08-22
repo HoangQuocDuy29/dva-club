@@ -4,7 +4,7 @@ import { authRoutes } from "./routes/authRoutes";
 import { protectedRoutes } from "./routes/protectedRoutes";
 import { publicRoutes } from "./routes/publicRoutes";
 import { useAuthStore } from "../modules/auth/store/authStore";
-
+import { NotFound } from "../containers/common/ErrorPage";
 export const AppRouter: React.FC = () => {
   const { initializeAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +41,8 @@ export const AppRouter: React.FC = () => {
       
       {/* Public routes (home, about) */}
       {publicRoutes}
+      {/* 404 Page - Must be last */}
+        <Route path="*" element={<NotFound />} />
       
       {/* 404 fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
