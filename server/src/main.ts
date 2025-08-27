@@ -20,11 +20,6 @@ async function bootstrap() {
     // ✅ Global Exception Filter
     app.useGlobalFilters(new GlobalExceptionFilter());
 
-    // ❌ REMOVE/COMMENT OUT THIS BLOCK - ServeStaticModule handles static files now
-    // app.useStaticAssets(join(__dirname, '..', 'storage'), {
-    //   prefix: '/storage/',
-    // });
-
     // Enhanced validation pipe
     app.useGlobalPipes(
       new ValidationPipe({

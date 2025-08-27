@@ -24,15 +24,15 @@ const samplePlayers: Player[] = [
     position: "Outside Hitter",
     height: "1m75",
     avatar: "/images/players/player1.jpg",
-    address: "Russian"
+    address: "Moscow"
   },
   {
     id: 2,
-    name: "Quoc Duy", 
-    position: "Outside Hitter",
+    name: "Quốc Duy", 
+    position: "Setter",
     height: "1m6",
     avatar: "/images/players/player2.jpg",
-    address: "Mỹ"
+    address: "Thái Bình"
   },
   {
     id: 3,
